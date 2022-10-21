@@ -1,0 +1,95 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PlayerMovement : MonoBehaviour
+{
+[SerializeField] private float speed = 3f; // скорость движения
+//[SerializeField] private int lives = 5; // кол-во хп
+[SerializeField] private float jumpForce = 15f; // сила прыжка
+private float HorizontalMove = 0f;
+private bool isGrounded = false;
+public float rayDistance = 0.6f;
+private bool FacingRight = true; 
+
+private Rigidbody2D rb;
+private SpriteRenderer sprite;
+
+// privat
+private void Awake()
+{
+    rb = GetComponent<Rigidbody2D>();
+    sprite = GetComponentInChildren<SpriteRenderer>();
+}
+
+private void FixedUpdate()
+{
+    CheckGround();
+}
+
+private void Update()
+{
+    if (Input.GetButton("Horizontal"))
+    Run();
+    if (isGrounded && Input.GetButtonDown("Jump"))
+    Jump();
+    RaycastHit2D hit = Physics2D.Raycast(rb.position, Vector2.down, rayDistance, LayerMask.GetMask("Ground"));
+    if (hit.collider != null)
+{
+    isGrounded = true;
+}
+else
+{
+    isGrounded = false;
+}
+HorizontalMove = Input.GetAxisRaw("Horizontal") * speed;
+
+animator.SetFloat("HorizontalMove", Mathf.Abs(HorizontalMove));
+
+if (isGrounded == false)
+{
+    animator.SetBool("Jumping", true);
+}
+else
+{
+    animator.SetBool("Jumping", false);
+}
+
+if(HorizontalMove < 0 && FacingRight)
+{
+    Flip();
+}
+else if (HorizontalMove > 0 && !FacingRight)
+{
+    Flip();
+}
+
+} 
+
+private void Run()
+{
+    Vector3 dir = transform.right * Input.GetAxis("Horizontal");
+
+    transform.position = Vector3.MoveTowards(transform.position, transform.position + dir, speed * Time.deltaTime);
+    sprite.flipX = dir.x < 0.0f;
+}
+
+private void Jump()
+{
+    rb.AddForce(transform.up * jumpForce, ForceMode2D.Impulse);
+}
+
+private void CheckGround()
+{
+    Collider2D[] collider = Physics2D.OverlapCircleAll(transform.position, 0.3f);
+    isGrounded = collider.Length > 1;
+}
+
+private void Flip()
+{
+    FacingRight = !FacingRight;
+}
+
+[Header("Player Animation Setting")]
+public Animator animator;
+}
